@@ -1,0 +1,24 @@
+- class: operatelog.util.ConfigOperateLogTest$AutoBot
+  targetFields:
+    - id
+    - name
+    - weapon
+  ignoreUnmarkedField: true
+  retrieveSuperField: false
+  fieldMeta:
+    - field: name
+      name: name
+      alias: 名字
+    - field: weapon
+      alias: 武器
+      displayPolicy: EXTRACT
+- class: operatelog.util.ConfigOperateLogTest$Weapon
+  fieldMeta:
+    - field: name
+      name: name
+      alias: 名字
+    - field: status
+      name: status
+      alias: 状态
+      displayPolicy: NAMED_ENUM
+      referEnumType: operatelog.util.ConfigOperateLogTest$WeaponStatus

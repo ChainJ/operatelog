@@ -1,9 +1,6 @@
 package operatelog.util;
 
 import lombok.*;
-import operatelog.annotation.OperateField;
-import operatelog.annotation.OperateModel;
-import operatelog.constant.DisplayPolicy;
 import operatelog.constant.NamedEnum;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
@@ -12,10 +9,12 @@ import org.junit.jupiter.api.Assertions;
 import java.util.Map;
 
 /**
+ * 配置操作日志单元测试
+ *
  * @author : JiangCheng
- * @date : 2023/7/19 17:58
+ * @date : 2023/7/21 14:44
  */
-public class OperateLogUtilTest {
+public class ConfigOperateLogTest {
     @Test
     public void testDiff() {
         AutoBot optimus = AutoBot.builder()
@@ -74,11 +73,21 @@ public class OperateLogUtilTest {
         Assertions.assertEquals(WeaponStatus.FIRING.getName(), valueDiff.getRight());
     }
 
+    @SneakyThrows
+    @Test
+    public void test(){
+        System.out.println(AutoBot.class.getName());
+        Class.forName("operatelog.util.ConfigOperateLogTest$AutoBot");
+        System.out.println(Weapon.class.getName());
+        Class.forName("operatelog.util.ConfigOperateLogTest$Weapon");
+        System.out.println(WeaponStatus.class.getName());
+        Class.forName("operatelog.util.ConfigOperateLogTest$WeaponStatus");
+    }
+
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    @OperateModel(fields = {"id", "name", "weapon"}, ignoreUnmarkedField = true)
     static class AutoBot {
         /**
          * ID
@@ -87,12 +96,10 @@ public class OperateLogUtilTest {
         /**
          * 名称
          */
-        @OperateField(name = "name", alias = "名字")
         String name;
         /**
          * 武器
          */
-        @OperateField(name = "weapon", alias = "武器", displayPolicy = DisplayPolicy.EXTRACT)
         Weapon weapon;
 
         /**
@@ -107,9 +114,10 @@ public class OperateLogUtilTest {
 
         /**
          * 生成一个幻影
+         *
          * @return 幻影
          */
-        public AutoBot phantom(){
+        public AutoBot phantom() {
             Weapon fakeWeapon = new Weapon();
             fakeWeapon.id = weapon.id;
             fakeWeapon.name = weapon.name;
@@ -136,12 +144,10 @@ public class OperateLogUtilTest {
         /**
          * 名称
          */
-        @OperateField(name = "name", alias = "名称")
         String name;
         /**
          * 状态
          */
-        @OperateField(name = "status", alias = "状态", displayPolicy = DisplayPolicy.NAMED_ENUM, referEnumType = WeaponStatus.class)
         Byte status;
 
         /**
