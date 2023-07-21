@@ -2,14 +2,20 @@ package operatelog.model;
 
 import com.sun.tools.javac.util.Assert;
 import lombok.Data;
-import operatelog.annotation.OperateField;
 import operatelog.constant.DisplayPolicy;
 import operatelog.constant.MetaSource;
 import operatelog.constant.NamedEnum;
 import operatelog.serializer.Serializer;
 import operatelog.serializer.common.StringSerializer;
+import operatelog.strategy.FieldMetaStrategy;
+import operatelog.strategy.MetaStrategyFactory;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 日志字段元数据
@@ -60,60 +66,62 @@ public class FieldMeta {
     MetaSource source;
 
     /**
-     * 根据目标类型生成日志字段元数据
-     *
-     * @param field 目标字段
-     * @return 日志字段元数据
+     * 构建元数据的字段
      */
-    public static FieldMeta create(Field field) {
-        Assert.checkNonNull(field, "日志对象字段不能为空");
+    Field field;
 
-        FieldMeta fieldMeta = create(field, MetaSource.CONFIGURATION);
-        if (fieldMeta == null) {
-            fieldMeta = create(field, MetaSource.DATA_BASE);
-        }
-        if (fieldMeta == null) {
-            fieldMeta = create(field, MetaSource.ANNOTATION);
-        }
-        if (fieldMeta == null) {
-            fieldMeta = new FieldMeta();
-        }
+    /**
+     * 复制当前对象
+     *
+     * @return 对象的复制体
+     */
+    public FieldMeta copy() {
+        FieldMeta copy = new FieldMeta();
+        copy.name = name;
+        copy.alias = alias;
+        copy.defaultValue = defaultValue;
+        copy.displayPolicy = displayPolicy;
+        copy.referEnumType = referEnumType;
+        copy.serializer = serializer;
+        copy.ignore = ignore;
+        copy.source = source;
+        copy.field = field;
 
-        return fieldMeta;
+        return copy;
     }
 
     /**
      * 根据目标类型生成日志字段元数据
      *
-     * @param field      目标字段
-     * @param metaSource 元数据来源
+     * @param field 目标字段
      * @return 日志字段元数据
      */
-    public static FieldMeta create(Field field, MetaSource metaSource) {
+    @Nonnull
+    public static FieldMeta create(Field field) {
         Assert.checkNonNull(field, "日志对象字段不能为空");
-        Assert.checkNonNull(metaSource, "元数据来源不能为空");
 
-        FieldMeta fieldMeta = new FieldMeta();
-        switch (metaSource) {
-            case ANNOTATION:
-                OperateField operateField = field.getAnnotation(OperateField.class);
-                if (operateField == null) {
-                    return null;
-                }
-                fieldMeta.name = operateField.name();
-                fieldMeta.alias = operateField.alias();
-                fieldMeta.defaultValue = operateField.defaultValue();
-                fieldMeta.displayPolicy = operateField.displayPolicy();
-                fieldMeta.referEnumType = operateField.referEnumType();
-                fieldMeta.serializer = operateField.serializer();
-                fieldMeta.ignore = operateField.ignore();
+        FieldMeta fieldMeta = null;
+        List<MetaSource> orderedMetaSources = Arrays.stream(MetaSource.values())
+                .sorted(Comparator.comparingInt(MetaSource::getOrder))
+                .collect(Collectors.toList());
+        for (MetaSource metaSource : orderedMetaSources) {
+            FieldMetaStrategy strategy = MetaStrategyFactory.getFieldMetaStrategy(metaSource);
+            if (strategy == null) {
+                continue;
+            }
+
+            fieldMeta = strategy.retrieveFromCache(field);
+            if (fieldMeta != null) {
                 break;
-            default:
-                // 不支持的元数据来源，默认不做处理
-                return null;
+            }
         }
-        fieldMeta.source = metaSource;
+
+        if (fieldMeta == null) {
+            fieldMeta = new FieldMeta();
+            fieldMeta.field = field;
+        }
 
         return fieldMeta;
     }
+
 }

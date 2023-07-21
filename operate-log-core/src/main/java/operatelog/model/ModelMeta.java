@@ -2,12 +2,12 @@ package operatelog.model;
 
 import com.sun.tools.javac.util.Assert;
 import lombok.Data;
-import operatelog.annotation.OperateModel;
 import operatelog.constant.MetaSource;
+import operatelog.strategy.MetaStrategyFactory;
+import operatelog.strategy.ModelMetaStrategy;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import javax.annotation.Nonnull;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,57 +39,55 @@ public class ModelMeta {
     MetaSource source;
 
     /**
-     * 根据目标类型生成日志对象元数据
-     *
-     * @param clazz 目标类型
-     * @return 日志对象元数据
+     * 构建元数据的类型
      */
-    public static ModelMeta create(Class<?> clazz) {
-        Assert.checkNonNull(clazz, "日志对象类型不能为空");
+    Class<?> clazz;
 
-        ModelMeta modelMeta = create(clazz, MetaSource.CONFIGURATION);
-        if (modelMeta == null) {
-            modelMeta = create(clazz, MetaSource.DATA_BASE);
-        }
-        if (modelMeta == null) {
-            modelMeta = create(clazz, MetaSource.ANNOTATION);
-        }
-        if (modelMeta == null) {
-            modelMeta = new ModelMeta();
-        }
+    /**
+     * 复制当前对象
+     *
+     * @return 对象的复制体
+     */
+    public ModelMeta copy() {
+        ModelMeta copy = new ModelMeta();
+        copy.targetFields = new ArrayList<>(targetFields);
+        copy.ignoreUnmarkedField = ignoreUnmarkedField;
+        copy.retrieveSuperField = retrieveSuperField;
+        copy.source = source;
+        copy.clazz = clazz;
 
-        return modelMeta;
+        return copy;
     }
 
     /**
      * 根据目标类型生成日志对象元数据
      *
-     * @param clazz      目标类型
-     * @param metaSource 元数据来源
-     * @return 元数据对象
+     * @param clazz 目标类型
+     * @return 日志对象元数据
      */
-    public static ModelMeta create(Class<?> clazz, MetaSource metaSource) {
+    @Nonnull
+    public static ModelMeta create(Class<?> clazz) {
         Assert.checkNonNull(clazz, "日志对象类型不能为空");
-        Assert.checkNonNull(metaSource, "元数据来源不能为空");
 
-        ModelMeta modelMeta = new ModelMeta();
-        switch (metaSource) {
-            case ANNOTATION:
-                OperateModel operateModel = clazz.getAnnotation(OperateModel.class);
-                if (operateModel == null) {
-                    return null;
-                }
-                modelMeta.ignoreUnmarkedField = operateModel.ignoreUnmarkedField();
-                modelMeta.retrieveSuperField = operateModel.retrieveSuperField();
-                if (operateModel.fields().length > 0) {
-                    modelMeta.targetFields = Arrays.stream(operateModel.fields()).collect(Collectors.toList());
-                }
+        ModelMeta modelMeta = null;
+        List<MetaSource> orderedMetaSources = Arrays.stream(MetaSource.values())
+                .sorted(Comparator.comparingInt(MetaSource::getOrder))
+                .collect(Collectors.toList());
+        for (MetaSource metaSource : orderedMetaSources) {
+            ModelMetaStrategy strategy = MetaStrategyFactory.getModelMetaStrategy(metaSource);
+            if (strategy == null) {
+                continue;
+            }
+
+            modelMeta = strategy.retrieveFromCache(clazz);
+            if (modelMeta != null) {
                 break;
-            default:
-                // 不支持的元数据来源，默认不做处理
-                return null;
+            }
         }
-        modelMeta.source = metaSource;
+        if (modelMeta == null) {
+            modelMeta = new ModelMeta();
+            modelMeta.clazz = clazz;
+        }
 
         return modelMeta;
     }

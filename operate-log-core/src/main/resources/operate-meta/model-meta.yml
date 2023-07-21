@@ -1,0 +1,19 @@
+- class: operatelog.model.Test.class
+  targetFields:
+    - field1
+    - field2
+    - field3
+  ignoreUnmarkedField: true
+  retrieveSuperField: false
+  fieldMeta:
+    - field: field1
+      name: field1
+      alias: alias1
+      displayPolicy: STRING
+    - field: field2
+      alias: alias2
+      displayPolicy: JSON
+    - field: field3
+      alias: alias3
+      displayPolicy: CUSTOMIZED
+      serializer: operatelog.serializer.common.EnumSerializer
