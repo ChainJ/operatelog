@@ -1,6 +1,5 @@
 package operatelog.model;
 
-import com.sun.tools.javac.util.Assert;
 import lombok.Data;
 import operatelog.constant.DisplayPolicy;
 import operatelog.constant.MetaSource;
@@ -97,9 +96,7 @@ public class FieldMeta {
      * @return 日志字段元数据
      */
     @Nonnull
-    public static FieldMeta create(Field field) {
-        Assert.checkNonNull(field, "日志对象字段不能为空");
-
+    public static FieldMeta create(@Nonnull Field field) {
         FieldMeta fieldMeta = null;
         List<MetaSource> orderedMetaSources = Arrays.stream(MetaSource.values())
                 .sorted(Comparator.comparingInt(MetaSource::getOrder))

@@ -6,9 +6,10 @@
 
     <groupId>chainj.common</groupId>
     <artifactId>operate-log</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
     <modules>
         <module>operate-log-core</module>
+        <module>operate-log-demo</module>
     </modules>
     <packaging>pom</packaging>
 

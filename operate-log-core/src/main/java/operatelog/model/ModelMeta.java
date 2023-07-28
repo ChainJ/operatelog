@@ -1,6 +1,5 @@
 package operatelog.model;
 
-import com.sun.tools.javac.util.Assert;
 import lombok.Data;
 import operatelog.constant.MetaSource;
 import operatelog.strategy.MetaStrategyFactory;
@@ -66,9 +65,7 @@ public class ModelMeta {
      * @return 日志对象元数据
      */
     @Nonnull
-    public static ModelMeta create(Class<?> clazz) {
-        Assert.checkNonNull(clazz, "日志对象类型不能为空");
-
+    public static ModelMeta create(@Nonnull Class<?> clazz) {
         ModelMeta modelMeta = null;
         List<MetaSource> orderedMetaSources = Arrays.stream(MetaSource.values())
                 .sorted(Comparator.comparingInt(MetaSource::getOrder))
